@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img class="logo" th:src="@{/images/skincarelogo.png}" alt="Logo">
+    </div>
+    <button id="cartButton" class="cart-btn">🛒 Cart</button>
+</header>
+
+<nav class="nav-bar">
+    <div class="button">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<h1 class="title-pages">Our Products</h1>
+
+<div class="product-grid">
+    <div th:each="product : ${products}" class="product-card">
+        <div class="product-image">
+            <img th:src="@{${product.imageUrl}}" alt="Product Image" />
+        </div>
+        <div class="product-info">
+            <h2 th:text="${product.name}">Product Name</h2>
+            <p th:text="${product.description}">Product Description</p>
+            <p class="price">
+                Price: <span th:text="'$' + ${product.price}">$0.00</span>
+            </p>
+            <p class="stock">
+                Stock: <span th:text="${product.stockQuantity > 0 ? product.stockQuantity : 'Out of Stock'}">Out of Stock</span>
+            </p>
+            <a th:href="@{/product/{id}(id=${product.productId})}" class="btn">View Details</a>
+            <button class="add-to-cart" th:attr="data-id=${product.productId}">Add to Cart</button>
+        </div>
+    </div>
+</div>
+
+<div id="cartSidebar" class="cart-sidebar">
+    <div class="cart-header">
+        <h2>Your Cart</h2>
+        <button id="closeCart">✖</button>
+    </div>
+
+	<div class="cart-items">
+	    <div th:if="${cartItems == null or #lists.isEmpty(cartItems)}">
+	        <p>Your cart is empty!</p>
+	    </div>
+
+	    <table th:if="${cartItems != null and not #lists.isEmpty(cartItems)}">
+	        <thead>
+	            <tr>
+	                <th>Image</th>
+	                <th>Product Name</th>
+	                <th>Quantity</th>
+	                <th>Price</th>
+	                <th>Action</th>
+	            </tr>
+	        </thead>
+	        <tbody>
+	            <tr th:each="item : ${cartItems}">
+	                <td><img th:src="@{${item.imageUrl}}" alt="Product Image" width="50"></td>
+	                <td th:text="${item.productName}">Product Name</td>
+	                <td th:text="${item.quantity}">1</td>
+	                <td th:text="'$' + ${item.price * item.quantity}">$0.00</td>
+	                <td>
+	                    <button class="remove-item" th:attr="data-id=${item.productId}">Remove</button>
+	                </td>
+	            </tr>
+	        </tbody>
+	    </table>
+	</div>
+
+	<div class="cart-footer">
+	    <button id="clearCart">Clear Cart</button>
+	    <a href="/checkout">Proceed to Checkout</a>
+	</div>
+   </div>
+
+<script src="/js/cart.js"></script>
+
+</body>
+</html>

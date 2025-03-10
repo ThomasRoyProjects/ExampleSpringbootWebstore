@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <title>Checkout</title>
+</head>
+<body>
+
+<div class="checkout-container">
+    <h2>Checkout</h2>
+
+    <form id="checkoutForm" class="checkout-form">
+        <label for="continentSelect">Select Continent:</label>
+        <select id="continentSelect">
+            <option value="Europe" selected>Europe</option>
+            <option value="North_America">North America</option>
+            <option value="Asia">Asia</option>
+        </select>
+    </form>
+
+    <div class="checkout-summary">
+        <p id="taxRate">Tax Rate: 20%</p>
+        <p id="shippingCost">Shipping Cost: $15.00</p>
+        <p id="taxAmount">Tax Amount: $10.00</p>
+        <p id="finalPrice">Final Price: $125.00</p>
+    </div>
+
+    <div class="checkout-footer">
+        <a id="proceedToPayment" class="btn" href="#">Proceed to Payment</a>
+    </div>
+</div>
+
+<script src="/js/checkout.js"></script>
+
+</body>
+</html>

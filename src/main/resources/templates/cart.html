@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Webstore</h1>
+    <button id="cartButton">🛒 Cart</button>
+</header>
+
+<div id="cartSidebar" class="cart-sidebar">
+    <div class="cart-header">
+        <h2>Your Cart</h2>
+        <button id="closeCart">✖</button>
+    </div>
+
+    <div class="cart-items">
+        <div th:if="${cartItems.isEmpty()}">
+            <p>Your cart is empty!</p>
+        </div>
+
+        <table th:if="${!cartItems.isEmpty()}">
+            <tbody>
+                <tr th:each="item : ${cartItems}">
+                    <td><img th:src="@{${item.imageUrl}}" alt="Product Image" width="50"></td>
+                    <td th:text="${item.productName}">Product Name</td>
+                    <td th:text="${item.quantity}">1</td>
+                    <td th:text="'$' + ${item.price}">$0.00</td>
+                    <td>
+                        <button class="remove-item" th:attr="data-id=${item.productId}">Remove</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="cart-footer">
+        <h3>Total: <span th:text="'$' + ${totalPrice}">$0.00</span></h3>
+        <button id="clearCart">Clear Cart</button>
+        <a href="/checkout">Proceed to Checkout</a>
+    </div>
+</div>
+
+<!-- Products Section -->
+<main>
+    <div class="products">
+        <div th:each="product : ${products}">
+            <img th:src="@{${product.imageUrl}}" alt="Product Image" width="100">
+            <h3 th:text="${product.name}">Product Name</h3>
+            <p th:text="'$' + ${product.price}">$0.00</p>
+            <button class="add-to-cart" th:attr="data-id=${product.productId}">Add to Cart</button>
+        </div>
+    </div>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cartButton = document.getElementById("cartButton");
+    const cartSidebar = document.getElementById("cartSidebar");
+    const closeCart = document.getElementById("closeCart");
+
+    cartButton.addEventListener("click", function () {
+        cartSidebar.classList.add("active");
+        loadCart();
+    });
+
+    closeCart.addEventListener("click", function () {
+        cartSidebar.classList.remove("active");
+    });
+
+    window.addEventListener("click", function (e) {
+        if (!cartSidebar.contains(e.target) && !cartButton.contains(e.target)) {
+            cartSidebar.classList.remove("active");
+        }
+    });
+
+    document.querySelectorAll(".add-to-cart").forEach(button => {
+        button.addEventListener("click", function () {
+            let productId = this.getAttribute("data-id");
+            fetch("/cart/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: productId, quantity: 1 })
+            }).then(() => {
+                alert("Item added to cart!");
+                loadCart();
+            });
+        });
+    });
+
+    document.addEventListener("click", function (e) {
+        if (e.target.classList.contains("remove-item")) {
+            let productId = e.target.getAttribute("data-id");
+            fetch(`/cart/remove/${productId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            }).then(() => {
+                alert("Item removed!");
+                loadCart();
+            });
+        }
+    });
+
+    function loadCart() {
+        fetch("/cart/items")
+            .then(response => response.text())
+            .then(html => {
+                document.querySelector(".cart-items").innerHTML = html;
+            });
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+    <h1>Product Details</h1>
+    <div class="logout-btn">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn">Logout</button>
+        </form>
+    </div>
+</header>
+
+<div class="product-details-container" th:if="${product != null}">
+    <div class="product-card">
+        <div class="product-details-img">
+<img th:src="@{${product.imageUrl}}" alt="Product Image" />        </div>
+
+        <div class="product-details-info">
+            <h2 th:text="${product.name}">Product Name</h2>
+            <p th:text="${product.description}">Product Description</p>
+            <p class="price">
+                Price: <span th:text="'$' + ${product.price}">$0.00</span>
+            </p>
+            <p class="stock">
+                Stock: <span th:text="${product.stockQuantity > 0 ? product.stockQuantity : 'Out of Stock'}">Out of Stock</span>
+            </p>
+
+            <form action="/cart/add" method="post" class="add-to-cart-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" th:value="${product.productId}" name="productId"/>
+                <input type="number" name="quantity" value="1" min="1" max="${product.stockQuantity}" />
+                <button type="submit" class="btn" th:disabled="${product.stockQuantity == 0}">Add to Cart</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div th:if="${product == null}">
+    <p>Product not found.</p>
+</div>
+</body>
+</html>

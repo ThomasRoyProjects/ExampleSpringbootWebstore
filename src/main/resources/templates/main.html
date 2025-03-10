@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+	<div class="logo-container"><img class="logo" th:src="@{/images/skincarelogo.png}" alt="logo">  </div>
+   
+</header>
+<nav class="nav-bar">
+   
+	<div>
+		<form th:action="@{/login}" method="get">
+			<button type="submit" class="btn">Sign In</button>
+		</form>
+	</div>
+	
+	 <div class="register-btn">
+        <form th:action="@{/register}" method="get">
+            <button type="submit" class="btn">Sign Up</button>
+        </form>
+    </div>
+	
+	
+</nav>
+<h1 class="title-pages">Our Products</h1>
+
+<div class="product-grid">
+    <div th:each="product : ${products}" class="product-card">
+        <div class="product-image">
+            <img th:src="@{${product.imageUrl}}" alt="Product Image" />
+        </div>
+        <div class="product-info">
+            <h2 th:text="${product.name}">Product Name</h2>
+            <p th:text="${product.description}">Product Description</p>
+            <p class="price">
+                Price: <span th:text="'$' + ${product.price}">$0.00</span>
+            </p>
+            <p class="stock">
+                Stock: <span th:text="${product.stockQuantity > 0 ? product.stockQuantity : 'Out of Stock'}">Out of Stock</span>
+            </p>
+            <a th:href="@{/product/{id}(id=${product.productId})}" class="btn">View Details</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

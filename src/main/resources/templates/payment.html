@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script defer src="/js/payment.js"></script>
+</head>
+<body>
+
+<div class="payment-container">
+    <h2>Payment</h2>
+    
+    <p id="continentDisplay"></p>
+    <p id="taxRateDisplay"></p>
+    <p id="shippingCostDisplay"></p>
+    <p id="taxAmountDisplay"></p>
+    <p id="finalPriceDisplay"></p>
+
+    <form id="paymentForm">
+        <label for="cardNumber">Enter Card Number:</label>
+        <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" required>
+        <button type="submit" class="btn">Pay Now</button>
+    </form>
+</div>
+
+</body>
+</html>

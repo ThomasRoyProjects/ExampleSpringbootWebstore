@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+	<link rel="stylesheet" href="/css/style.css">                  
+</head>
+<body>
+    <h1>Add Product</h1>
+    <form class ="add-product-form" action="/admin-products/add" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <label class="form-label" for="name">Product Name:</labelclass>
+        <input class="form-input" type="text" id="name" name="name" required><br>
+
+        <label class="form-label" for="description">Description:</label>
+        <textarea class="form-textarea" id="description" name="description" required></textarea><br>
+
+        <label class="form-label" for="price">Price:</label>
+        <input class="form-input" type="text" id="price" name="price" required pattern="^\d+(\.\d{1,2})?$" placeholder="e.g., 10.99"><br>
+
+        <label class="form-label" for="stockQuantity">Stock Quantity:</label>
+        <input class="form-input" type="number" id="stockQuantity" name="stockQuantity" required><br>
+
+        <label class="form-label" for="image">Product Image:</label>
+        <input class="form-input" type="file" id="image" accept="image/*"><br>
+		
+
+        <input type="hidden" id="imageUrl" name="imageUrl" />
+
+        <button class="add-products-button" type="submit">Add Product</button>
+    </form>
+
+    <script src="/js/add-product.js"></script>
+</body>
+</html>
