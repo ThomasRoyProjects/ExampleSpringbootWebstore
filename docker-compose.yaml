@@ -15,5 +15,18 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  webstore:
+    build: .
+    container_name: webstore-app
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/amazingwebstore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - "8080:8080"
+
 volumes:
   mysql_data:
