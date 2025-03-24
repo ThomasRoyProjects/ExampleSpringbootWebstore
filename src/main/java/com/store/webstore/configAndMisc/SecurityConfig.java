@@ -21,11 +21,10 @@ public class SecurityConfig {
         http
             .securityMatcher("/admin/**", "/admin-login", "/admin-products")  
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin-login", "/css/**", "/js/**").permitAll() 
+                .requestMatchers("/admin-login", "/css/**", "/js/**", "/order/checkout", "/checkout/*").permitAll()  
                 .requestMatchers("/admin/products/add").hasAuthority("ROLE_ADMIN") 
                 .requestMatchers("/add-products").hasAuthority("ROLE_ADMIN") 
                 .requestMatchers("/admin-products").authenticated()  
-
                 .anyRequest().authenticated()  
             )
             .formLogin(formLogin -> formLogin
@@ -43,7 +42,8 @@ public class SecurityConfig {
                     "/admin/products/add", 
                     "/admin/uploadImage", 
                     "/admin-products",  
-                    "/css/**", "/js/**", "/images/**", "/product/image/**", "/uploads/*" 
+                    "/css/**", "/js/**", "/images/**", "/product/image/**", 
+                    "/uploads/*", "/order/checkout", "/checkout/process", "/checkout/update", "/checkout/payment", "/checkout/*"
                 )
             );
 
@@ -57,15 +57,17 @@ public class SecurityConfig {
                 .ignoringRequestMatchers(
                     "/login", "/register", "/uploadImage", "/cart/add", 
                     "/main", "/images/**", "/product/image/**", "/", 
-                    "/product/**", "/products", "/static/**", "/uploads/*", "/admin-products"
+                    "/product/**", "/products", "/static/**", "/uploads/*", 
+                    "/admin-products", "/order/checkout", "/checkout/process", "/checkout/update", "/payment", "/checkout/*"
                 )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/register", "/login", "/css/**", "/js/**", "/images/**", 
                     "/product/image/**", "/product/**", "/products", "/static/**", 
-                    "/main", "/", "/uploads/*", "/admin-products"
-                ).permitAll()
+                    "/main", "/", "/uploads/*", "/admin-products", 
+                    "/checkout/*", "/checkout/update", "/checkout/process", "/payment"
+                ).permitAll()  // for the checkout routes are publicly accessible
                 .anyRequest().authenticated()
             )
             .formLogin(formLogin -> formLogin
@@ -78,9 +80,6 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/main")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
-            )
-            .exceptionHandling(exceptions -> exceptions
-                .accessDeniedPage("/403")
             )
             .sessionManagement(session -> session
                 .sessionFixation().migrateSession()

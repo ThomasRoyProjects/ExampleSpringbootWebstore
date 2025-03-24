@@ -2,6 +2,7 @@ package com.store.webstore.Services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.store.webstore.Models.CartItem;
 import com.store.webstore.Models.Product;
@@ -18,7 +19,6 @@ public class CartService {
     private ProductRepository productRepository;
 
     private List<CartItem> cartItems = new ArrayList<>();
-
 
     public void addProductToCart(CartItem item) {
         Product product = productRepository.findById(item.getProductId())
@@ -41,11 +41,9 @@ public class CartService {
         cartItems.add(newItem);
     }
 
-
     public List<CartItem> getCartItems() {
         return cartItems;
     }
-
 
     public double getTotalPrice() {
         return cartItems.stream()
@@ -53,12 +51,28 @@ public class CartService {
                 .sum();
     }
 
-
     public void removeProductFromCart(Long productId) {
         cartItems.removeIf(item -> item.getProductId().equals(productId));
     }
 
     public void clearCart() {
         cartItems.clear();
+    }
+
+    // updates stock quantity after order is placed
+    @Transactional
+    public void processOrder() {
+        for (CartItem cartItem : cartItems) {
+            Product product = productRepository.findById(cartItem.getProductId())
+                    .orElseThrow(() -> new ProductNotFoundException(cartItem.getProductId()));
+
+            int updatedStock = product.getStockQuantity() - cartItem.getQuantity();
+            if (updatedStock < 0) {
+                updatedStock = 0; // make sure stock isnt negative
+            }
+            product.setStockQuantity(updatedStock);
+            productRepository.save(product);
+        }
+        clearCart(); // clear cart after order is complete
     }
 }

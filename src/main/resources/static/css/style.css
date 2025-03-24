@@ -760,3 +760,64 @@ button:hover {
     border-radius: 5px;
     margin-top: 10px;
 }
+/* Custom Thank You Page Styles */
+
+.thank-you-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    font-family: 'Arial', sans-serif;
+}
+
+.thank-you-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+.thank-you-title {
+    font-size: 24px;
+    color: #4a4a4a;
+    margin-bottom: 10px;
+}
+
+.thank-you-message {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.thank-you-button {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background: #6e8efb;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.thank-you-button:hover {
+    background: #a777e3;
+    transform: scale(1.05);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

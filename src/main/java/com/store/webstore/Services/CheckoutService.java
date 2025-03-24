@@ -1,31 +1,27 @@
 package com.store.webstore.Services;
 
+import com.store.webstore.Models.TaxRate;
+import com.store.webstore.Repositories.TaxRateRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.core.io.ClassPathResource;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
 
 @Service
 public class CheckoutService {
+    private final TaxRateRepository taxRateRepository;
 
-    private Properties taxProperties = new Properties();
-
-    public CheckoutService() {
-        // Load properties file
-        try (FileInputStream fis = new FileInputStream(new ClassPathResource("taxes.properties").getFile())) {
-            taxProperties.load(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public CheckoutService(TaxRateRepository taxRateRepository) {
+        this.taxRateRepository = taxRateRepository;
     }
-
-    public double getTaxRate(String continent) {
-        return Double.parseDouble(taxProperties.getProperty("tax." + continent.toLowerCase(), "0.0"));
+public double getTaxRate(String continent) {
+    TaxRate taxRate = taxRateRepository.findByContinent(continent);
+    if (taxRate == null) {
+        throw new IllegalArgumentException("Tax rate not found for continent: " + continent);
     }
+    return taxRate.getTaxRate();
+}
+
 
     public double getShippingCost(String continent) {
-        return Double.parseDouble(taxProperties.getProperty("shipping." + continent.toLowerCase(), "0.0"));
+        TaxRate taxRate = taxRateRepository.findByContinent(continent);
+        return (taxRate != null) ? taxRate.getShippingCost() : 0.0;
     }
 }

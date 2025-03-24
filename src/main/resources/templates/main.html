@@ -43,7 +43,9 @@
             <p class="stock">
                 Stock: <span th:text="${product.stockQuantity > 0 ? product.stockQuantity : 'Out of Stock'}">Out of Stock</span>
             </p>
-            <a th:href="@{/product/{id}(id=${product.productId})}" class="btn">View Details</a>
+			<a href="/login">
+			    <button class="add-to-cart">Add to Cart</button>
+			</a>
         </div>
     </div>
 </div>

@@ -46,7 +46,7 @@
     </div>
 </div>
 
-<!-- Products Section -->
+
 <main>
     <div class="products">
         <div th:each="product : ${products}">
@@ -58,63 +58,6 @@
     </div>
 </main>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const cartButton = document.getElementById("cartButton");
-    const cartSidebar = document.getElementById("cartSidebar");
-    const closeCart = document.getElementById("closeCart");
-
-    cartButton.addEventListener("click", function () {
-        cartSidebar.classList.add("active");
-        loadCart();
-    });
-
-    closeCart.addEventListener("click", function () {
-        cartSidebar.classList.remove("active");
-    });
-
-    window.addEventListener("click", function (e) {
-        if (!cartSidebar.contains(e.target) && !cartButton.contains(e.target)) {
-            cartSidebar.classList.remove("active");
-        }
-    });
-
-    document.querySelectorAll(".add-to-cart").forEach(button => {
-        button.addEventListener("click", function () {
-            let productId = this.getAttribute("data-id");
-            fetch("/cart/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: productId, quantity: 1 })
-            }).then(() => {
-                alert("Item added to cart!");
-                loadCart();
-            });
-        });
-    });
-
-    document.addEventListener("click", function (e) {
-        if (e.target.classList.contains("remove-item")) {
-            let productId = e.target.getAttribute("data-id");
-            fetch(`/cart/remove/${productId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            }).then(() => {
-                alert("Item removed!");
-                loadCart();
-            });
-        }
-    });
-
-    function loadCart() {
-        fetch("/cart/items")
-            .then(response => response.text())
-            .then(html => {
-                document.querySelector(".cart-items").innerHTML = html;
-            });
-    }
-});
-</script>
 
 </body>
 </html>

@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/style.css">
+   <meta name="_csrf" th:attr="content=${_csrf.token}" />
+<meta name="_csrf_header" th:attr="content=${_csrf.headerName}" />
+
     <title>Checkout</title>
 </head>
 <body>
@@ -11,14 +14,14 @@
 <div class="checkout-container">
     <h2>Checkout</h2>
 
-    <form id="checkoutForm" class="checkout-form">
+    <div class="checkout-form">
         <label for="continentSelect">Select Continent:</label>
         <select id="continentSelect">
             <option value="Europe" selected>Europe</option>
             <option value="North_America">North America</option>
             <option value="Asia">Asia</option>
         </select>
-    </form>
+    </div>
 
     <div class="checkout-summary">
         <p id="taxRate">Tax Rate: 20%</p>

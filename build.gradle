@@ -12,8 +12,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-
-
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -40,9 +38,14 @@ dependencies {
 }
 
 tasks.withType(JavaCompile) {
-	options.compilerArgs += '-parameters' // Add compiler flag for parameter names
+	options.compilerArgs += '-parameters' 
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+jar {
+    archiveBaseName.set("webstore")  
+    archiveVersion.set("1.0")        
 }
