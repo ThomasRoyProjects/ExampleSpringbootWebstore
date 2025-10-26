@@ -33,7 +33,6 @@ services:
       - "8080:8080"
     volumes:
       - ./uploads:/app/uploads
-      - ./src/main/resources/static/images:/app/src/main/resources/static/images
     networks:
       - webstore-network
 
