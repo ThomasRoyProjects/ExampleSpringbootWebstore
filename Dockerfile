@@ -7,6 +7,8 @@ WORKDIR /app
 # Copy only the specific JAR file
 COPY build/libs/webstore-0.0.1-SNAPSHOT.jar app.jar
 
+COPY src/main/resources/static/images /app/src/main/resources/static/images
+
 # Expose the application port
 EXPOSE 8080
 
