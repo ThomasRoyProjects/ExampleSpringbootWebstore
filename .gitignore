@@ -35,8 +35,26 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### OS / Editor Junk ###
 .DS_Store
-src/.DS_Store
-src/main/.DS_Store
-src/main/resources/.DS_Store
-.DS_Store
+Thumbs.db
+Desktop.ini
+
+### Local App Data / Runtime Artifacts ###
+*.log
+*.tmp
+*.swp
+
+### Local Environment / Secrets ###
+.env
+.env.*
+application-local.properties
+application-dev.properties
+src/main/resources/application-local.properties
+src/main/resources/application-dev.properties
+
+### Local Databases ###
+*.db
+*.sqlite
+*.sqlite3
