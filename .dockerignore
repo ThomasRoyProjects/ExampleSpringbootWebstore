@@ -1,0 +1,10 @@
+.git
+.github
+.gradle
+build
+data
+uploads
+.DS_Store
+**/.DS_Store
+*.log
+.env

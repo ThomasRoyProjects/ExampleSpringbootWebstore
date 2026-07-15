@@ -1,41 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/style.css">
-   <meta name="_csrf" th:attr="content=${_csrf.token}" />
-<meta name="_csrf_header" th:attr="content=${_csrf.headerName}" />
-
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title>Checkout</title>
 </head>
 <body>
+<main class="checkout-container">
+    <h1>Checkout</h1>
 
-<div class="checkout-container">
-    <h2>Checkout</h2>
+    <div id="checkoutError" class="checkout-error" role="alert" aria-live="assertive"></div>
 
-    <div class="checkout-form">
-        <label for="continentSelect">Select Continent:</label>
-        <select id="continentSelect">
-            <option value="Europe" selected>Europe</option>
-            <option value="North_America">North America</option>
-            <option value="Asia">Asia</option>
-        </select>
+    <div th:if="${#lists.isEmpty(cartItems)}">
+        <p>Your cart is empty.</p>
+        <a href="/products" class="btn">Continue Shopping</a>
     </div>
 
-    <div class="checkout-summary">
-        <p id="taxRate">Tax Rate: 20%</p>
-        <p id="shippingCost">Shipping Cost: $15.00</p>
-        <p id="taxAmount">Tax Amount: $10.00</p>
-        <p id="finalPrice">Final Price: $125.00</p>
-    </div>
+    <section th:if="${!#lists.isEmpty(cartItems)}" aria-labelledby="orderSummaryTitle">
+        <h2 id="orderSummaryTitle">Order summary</h2>
+        <div class="table-wrap">
+            <table class="checkout-table">
+                <caption class="sr-only">Items included in this order</caption>
+                <thead>
+                    <tr><th scope="col">Product</th><th scope="col">Quantity</th><th scope="col">Line Total</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${cartItems}">
+                        <th scope="row" th:text="${item.productName}">Product</th>
+                        <td th:text="${item.quantity}">1</td>
+                        <td th:text="'$' + ${item.lineTotal}">$0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-    <div class="checkout-footer">
-        <a id="proceedToPayment" class="btn" href="#">Proceed to Payment</a>
-    </div>
-</div>
+        <form id="checkoutForm">
+            <div class="checkout-form">
+                <label for="continentSelect">Shipping Region</label>
+                <select id="continentSelect" name="continent" autocomplete="country-name">
+                    <option value="Europe" th:selected="${continent == 'Europe'}">Europe</option>
+                    <option value="North_America" th:selected="${continent == 'North_America'}">North America</option>
+                    <option value="South_America" th:selected="${continent == 'South_America'}">South America</option>
+                    <option value="Africa" th:selected="${continent == 'Africa'}">Africa</option>
+                    <option value="Asia" th:selected="${continent == 'Asia'}">Asia</option>
+                    <option value="Australia" th:selected="${continent == 'Australia'}">Australia</option>
+                    <option value="Antarctica" th:selected="${continent == 'Antarctica'}">Antarctica</option>
+                </select>
+            </div>
 
+            <div class="checkout-summary" aria-live="polite">
+                <p id="subtotal" th:text="'Subtotal: $' + ${totalPrice}">Subtotal: $0.00</p>
+                <p id="taxRate" th:text="'Tax Rate: ' + ${taxRate} + '%'">Tax Rate: 0.00%</p>
+                <p id="shippingCost" th:text="'Shipping Cost: $' + ${shippingCost}">Shipping Cost: $0.00</p>
+                <p id="taxAmount" th:text="'Tax Amount: $' + ${taxAmount}">Tax Amount: $0.00</p>
+                <p id="finalPrice" th:text="'Final Price: $' + ${finalPrice}">Final Price: $0.00</p>
+            </div>
+
+            <button id="confirmCheckout" class="btn" type="submit">Confirm Order</button>
+        </form>
+    </section>
+</main>
 <script src="/js/checkout.js"></script>
-
 </body>
 </html>

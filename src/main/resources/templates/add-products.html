@@ -1,36 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product</title>
-	<link rel="stylesheet" href="/css/style.css">                  
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <h1>Add Product</h1>
-    <form class ="add-product-form" action="/admin-products/add" method="post" enctype="multipart/form-data">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <main class="admin-container add-product-page">
+        <section class="admin-form-card" aria-labelledby="add-product-title">
+            <div class="admin-form-header">
+                <p class="eyebrow">Catalog management</p>
+                <h1 id="add-product-title">Add Product</h1>
+                <p class="auth-support">Create a polished product listing with complete details and an optional JPEG or PNG image.</p>
+                <a class="btn secondary-action" th:href="@{/admin/products}">Back to product management</a>
+            </div>
 
-        <label class="form-label" for="name">Product Name:</labelclass>
-        <input class="form-input" type="text" id="name" name="name" required><br>
+            <div id="upload-result" role="status" aria-live="polite" class="form-status"></div>
 
-        <label class="form-label" for="description">Description:</label>
-        <textarea class="form-textarea" id="description" name="description" required></textarea><br>
+            <form class="add-product-form product-form" th:action="@{/admin/products/add}" th:object="${productForm}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" id="imageUrl" th:field="*{imageUrl}" />
 
-        <label class="form-label" for="price">Price:</label>
-        <input class="form-input" type="text" id="price" name="price" required pattern="^\d+(\.\d{1,2})?$" placeholder="e.g., 10.99"><br>
+                <div th:if="${#fields.hasAnyErrors()}" role="alert" class="field-error">
+                    <p>Please correct the highlighted fields.</p>
+                </div>
 
-        <label class="form-label" for="stockQuantity">Stock Quantity:</label>
-        <input class="form-input" type="number" id="stockQuantity" name="stockQuantity" required><br>
+                <div class="form-field">
+                    <label class="form-label" for="name">Product Name</label>
+                    <input class="form-input" type="text" id="name" th:field="*{name}" required maxlength="120" autocomplete="off" aria-describedby="name-error">
+                    <span id="name-error" class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </div>
 
-        <label class="form-label" for="image">Product Image:</label>
-        <input class="form-input" type="file" id="image" accept="image/*"><br>
-		
+                <div class="form-field">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-textarea" id="description" th:field="*{description}" required maxlength="1000" autocomplete="off" aria-describedby="description-error"></textarea>
+                    <span id="description-error" class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+                </div>
 
-        <input type="hidden" id="imageUrl" name="imageUrl" />
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label" for="price">Price</label>
+                        <input class="form-input" type="number" id="price" th:field="*{price}" required min="0.01" step="0.01" inputmode="decimal" placeholder="e.g., 10.99" aria-describedby="price-error">
+                        <span id="price-error" class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+                    </div>
 
-        <button class="add-products-button" type="submit">Add Product</button>
-    </form>
+                    <div class="form-field">
+                        <label class="form-label" for="stockQuantity">Stock Quantity</label>
+                        <input class="form-input" type="number" id="stockQuantity" th:field="*{stockQuantity}" required min="0" inputmode="numeric" aria-describedby="stock-error">
+                        <span id="stock-error" class="field-error" th:if="${#fields.hasErrors('stockQuantity')}" th:errors="*{stockQuantity}"></span>
+                    </div>
+                </div>
+
+                <div class="form-field upload-field">
+                    <label class="form-label" for="image">Product Image</label>
+                    <input class="form-input product-image-input" type="file" id="image" name="image" accept="image/jpeg,image/png" required aria-describedby="imageUrl-error upload-help">
+                    <span id="upload-help" class="field-hint">Required. Upload a JPEG or PNG within the size and dimension limits.</span>
+                    <span id="imageUrl-error" class="field-error" th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}"></span>
+                </div>
+
+                <button class="add-products-button" type="submit">Add Product</button>
+            </form>
+        </section>
+    </main>
 
     <script src="/js/add-product.js"></script>
 </body>

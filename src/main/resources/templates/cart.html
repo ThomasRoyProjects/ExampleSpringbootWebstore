@@ -1,63 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart</title>
+    <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/style.css">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 </head>
 <body>
+<main class="cart-page">
+    <h1>Your Cart</h1>
+    <p class="cart-note">The products drawer is the canonical cart experience. This page shows the same cart contents for direct links.</p>
+    <div id="cartStatus" class="cart-status" role="status" aria-live="polite"></div>
 
-<header>
-    <h1>Webstore</h1>
-    <button id="cartButton">🛒 Cart</button>
-</header>
+    <section id="cartItems" class="cart-items" th:fragment="cart-items" aria-live="polite">
+        <p class="empty-cart" th:if="${cartItems == null or #lists.isEmpty(cartItems)}">Your cart is empty.</p>
 
-<div id="cartSidebar" class="cart-sidebar">
-    <div class="cart-header">
-        <h2>Your Cart</h2>
-        <button id="closeCart">✖</button>
-    </div>
-
-    <div class="cart-items">
-        <div th:if="${cartItems.isEmpty()}">
-            <p>Your cart is empty!</p>
-        </div>
-
-        <table th:if="${!cartItems.isEmpty()}">
+        <table class="cart-items-table" th:if="${cartItems != null and !#lists.isEmpty(cartItems)}">
+            <caption class="sr-only">Products currently in your cart</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Image</th>
+                    <th scope="col">Product</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Line total</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
             <tbody>
                 <tr th:each="item : ${cartItems}">
-                    <td><img th:src="@{${item.imageUrl}}" alt="Product Image" width="50"></td>
-                    <td th:text="${item.productName}">Product Name</td>
+                    <td><img th:src="@{${item.imageUrl}}" th:alt="${item.productName + ' product image'}" width="64" height="64"></td>
+                    <th scope="row" th:text="${item.productName}">Product Name</th>
                     <td th:text="${item.quantity}">1</td>
-                    <td th:text="'$' + ${item.price}">$0.00</td>
-                    <td>
-                        <button class="remove-item" th:attr="data-id=${item.productId}">Remove</button>
-                    </td>
+                    <td th:text="'$' + ${item.lineTotal}">$0.00</td>
+                    <td><button class="remove-item" type="button" th:attr="data-id=${item.productId},aria-label=${'Remove ' + item.productName + ' from cart'}">Remove</button></td>
                 </tr>
             </tbody>
         </table>
-    </div>
+        <div id="cartTotal" class="cart-total" th:text="'Total: $' + ${totalPrice}">Total: $0.00</div>
+    </section>
 
-    <div class="cart-footer">
-        <h3>Total: <span th:text="'$' + ${totalPrice}">$0.00</span></h3>
-        <button id="clearCart">Clear Cart</button>
-        <a href="/checkout">Proceed to Checkout</a>
-    </div>
-</div>
-
-
-<main>
-    <div class="products">
-        <div th:each="product : ${products}">
-            <img th:src="@{${product.imageUrl}}" alt="Product Image" width="100">
-            <h3 th:text="${product.name}">Product Name</h3>
-            <p th:text="'$' + ${product.price}">$0.00</p>
-            <button class="add-to-cart" th:attr="data-id=${product.productId}">Add to Cart</button>
-        </div>
+    <div class="cart-page-actions">
+        <a class="btn" href="/products">Continue Shopping</a>
+        <a class="btn checkout-link" href="/checkout">Proceed to Checkout</a>
     </div>
 </main>
-
-
+<script src="/js/cart.js"></script>
 </body>
 </html>

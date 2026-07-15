@@ -1,41 +1,59 @@
 services:
-  mysql-db:
-    image: mysql:8.0
-    container_name: mysql-db
+  mysql:
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: amazingwebstore
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: webstore
+      MYSQL_USER: webstore
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
     networks:
-      - webstore-network
+      - backend
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 5
-      start_period: 20s
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uwebstore -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   webstore:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: webstore
     restart: unless-stopped
     depends_on:
-      mysql-db:
+      mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/amazingwebstore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/webstore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: webstore
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      WEBSTORE_UPLOAD_DIR: /app/uploads
+      APP_ADMIN_BOOTSTRAP_ENABLED: ${APP_ADMIN_BOOTSTRAP_ENABLED:-false}
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-}
     ports:
-      - "8080:8080"
+      - "${WEBSTORE_PORT:-8080}:8080"
     volumes:
-      - ./uploads:/app/uploads
+      - uploads:/app/uploads
     networks:
-      - webstore-network
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 40s
 
 networks:
-  webstore-network:
-    driver: bridge
+  backend:
+    internal: true
+  frontend:
+
+volumes:
+  mysql-data:
+  uploads:

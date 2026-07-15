@@ -1,304 +1,150 @@
+# Spring Boot Webstore
 
-# Webstore Project
+[![CI](https://github.com/ThomasRoyProjects/ExampleSpringbootWebstore/actions/workflows/ci.yml/badge.svg)](https://github.com/ThomasRoyProjects/ExampleSpringbootWebstore/actions/workflows/ci.yml)
 
-  
+A server-rendered e-commerce reference application built with Java 17, Spring Boot, Spring Security, Thymeleaf, JPA, Flyway, MySQL, and Docker Compose.
 
-## Overview
+The project demonstrates session-isolated carts, server-authoritative checkout, persisted receipts, role-separated administration, validated image uploads, accessible responsive UI, and reproducible local/container deployment.
 
-  
+## Screenshots
 
-This is a Java-based webstore application built with **Spring Boot**, **Thymeleaf**, and **MySQL**. The project is containerized using **Docker** and can be easily deployed using **Docker Compose**.
+| Storefront | Accessible cart drawer |
+| --- | --- |
+| ![Responsive product storefront with two product cards](docs/screenshots/storefront.png) | ![Cart drawer showing one product, quantity, total, and checkout actions](docs/screenshots/cart-drawer.png) |
 
-  
+| Administrator login | Product creation |
+| --- | --- |
+| ![Centered administrator email login card](docs/screenshots/admin-login.png) | ![Responsive add-product form with padded image upload control](docs/screenshots/add-product.png) |
 
-## Prerequisites
+![Administrator product management page with collapsed edit controls](docs/screenshots/admin-products.png)
 
-  
+## Core behavior
 
-Make sure you have the following installed:
+- Customer registration and form login use normalized email addresses with BCrypt password hashing.
+- Canonical `ROLE_CUSTOMER` and `ROLE_ADMIN` authorization; disabled users cannot authenticate.
+- CSRF protection on every browser mutation.
+- One server-side cart per HTTP session; browser storage is not trusted.
+- Checkout calculates subtotal, tax, shipping, and final price from current database values inside one transaction.
+- Product stock uses pessimistic locking and cannot become negative.
+- Orders and immutable order lines are persisted and reloadable by confirmation number.
+- Product administration uses validated DTOs and a single `/admin/products/**` route family.
+- Image uploads accept only decoded JPEG/PNG content, enforce size/dimension limits, generate server filenames, and prevent path traversal.
+- Flyway owns the schema for both H2 development and MySQL production.
+- Health endpoints expose liveness/readiness without publishing sensitive actuator data.
 
-  
+## Architecture
 
-- [Docker](https://www.docker.com/)
-
-- [Docker Compose](https://docs.docker.com/compose/)
-
-- [Java 17](https://openjdk.org/projects/jdk/17/) (required for Gradle build)
-
-- [Gradle](https://gradle.org/install/) (or use the included Gradle Wrapper)
-
-  
-
-## Installation & Setup
-
-  
-
-### 1. Clone the Repository
-
-  
-
-```sh
-
-git  clone  https://github.com/ThomasRoyProjects/ExampleSpringbootWebstore.git
-
-cd  ExampleSpringbootWebstore
-
+```text
+Browser / Thymeleaf
+        |
+Spring MVC controllers + validated request DTOs
+        |
+Transactional application services
+        |
+Spring Data JPA repositories
+        |
+H2 (development/tests) or MySQL (Compose/production)
 ```
 
-  
+Important boundaries:
 
-### 2. Launch a Temporary MySQL Container for Build
+- `CartService` owns session-scoped cart state.
+- `CheckoutService` and `OrderService` own pricing, stock mutation, order creation, and receipt retrieval.
+- `ProductService` owns catalog persistence.
+- `ImageStorageService` is the only filesystem/image boundary.
+- `SecurityConfig` and the admin login filter enforce route authorization.
 
-  
+## Local development
 
-Start a temporary MySQL container to provide the database needed for the Gradle build (required for JPA tasks):
+Requirements: Java 17. The Gradle wrapper downloads the required Gradle version.
 
-  
-
-```sh
-
-docker  run  -d  --name  mysql-db  -e  MYSQL_ROOT_PASSWORD=root  -e  MYSQL_DATABASE=amazingwebstore  -p  3306:3306  mysql:8.0
-
+```bash
+./gradlew bootRun
 ```
 
-  
+The default development profile uses a durable local H2 database at `./data/webstore`, runs Flyway migrations, and seeds the two demo products idempotently. Open <http://localhost:8080>.
 
-This command:
+No administrator is created unless bootstrap is explicitly enabled:
 
-  
-
-- Starts a MySQL container named `mysql-db`
-
-- Sets the root password to `root`
-
-- Creates a database named `amazingwebstore`
-
-- Maps port 3306 to the host
-
-  
-
-Wait for the MySQL container to be ready (this may take a few seconds):
-
-  
-
-```sh
-
-docker  logs  mysql-db 2>&1 | grep  "ready for connections"
-
+```bash
+APP_ADMIN_BOOTSTRAP_ENABLED=true \
+APP_ADMIN_EMAIL=local-admin@example.com \
+APP_ADMIN_PASSWORD='replace-with-a-strong-password' \
+./gradlew bootRun
 ```
 
-  
+Bootstrap creates an administrator only when no admin account exists; it does not reset credentials on subsequent starts.
 
-Repeat the `docker logs` command until you see a message indicating the MySQL server is ready.
+## Docker Compose
 
-  
+Docker Compose runs the production profile with a private MySQL service, durable database/upload volumes, health checks, and a non-root application container. MySQL is not published to the host.
 
->  **Note**: Ensure port 3306 is free on your host (check with `netstat -tuln | grep 3306` or equivalent).
-
-  
-
-### 3. Build the Spring Boot Application
-
-  
-
-With the MySQL container running, build the JAR file:
-
-  
-
-```sh
-
-./gradlew  build  # For Linux/macOS
-
-# OR
-
-gradlew.bat  build  # For Windows
-
+```bash
+cp .env.example .env
+# Replace every placeholder in .env
+docker compose up --build
 ```
 
-  
+Open <http://localhost:8080>. Check service health with:
 
-After the build completes, stop and remove the temporary MySQL container:
-
-  
-
-```sh
-
-docker  stop  mysql-db
-
-docker  rm  mysql-db
-
+```bash
+docker compose ps
+curl --fail http://localhost:8080/actuator/health
 ```
 
-  
+Stop the application without deleting data:
 
-### 4. Start the Application with Docker Compose
-
-  
-
-Ensure ports 8080 and 3306 are free (check with `netstat -tuln | grep 8080` or equivalent). Then, run the following command to build and start the application and MySQL services:
-
-  
-
-```sh
-
-docker-compose  -f  docker-compose.yml  up  --build  -d
-
+```bash
+docker compose down
 ```
 
-  
+Delete local container data only when intentionally resetting the environment:
 
-This will:
-
-  
-
-- Start a MySQL container (named `mysql-db`)
-
-- Build and start the Spring Boot application (named `webstore`)
-
-  
-
-### 5. Verify Running Containers
-
-  
-
-Check that the containers are running:
-
-  
-
-```sh
-
-docker  ps
-
+```bash
+docker compose down --volumes
 ```
 
-  
+## Configuration
 
-You should see the MySQL and application containers (`mysql-db` and `webstore`).
+| Variable | Purpose | Required in Compose |
+| --- | --- | --- |
+| `MYSQL_PASSWORD` | Least-privilege `webstore` database password | Yes |
+| `MYSQL_ROOT_PASSWORD` | MySQL initialization root password | Yes |
+| `WEBSTORE_PORT` | Host port mapped to application port 8080 | No; defaults to `8080` |
+| `APP_ADMIN_BOOTSTRAP_ENABLED` | Enable one-time administrator creation | No; defaults to `false` |
+| `APP_ADMIN_EMAIL` | Bootstrap administrator email address | Only when bootstrap is enabled |
+| `APP_ADMIN_PASSWORD` | Bootstrap administrator password | Only when bootstrap is enabled |
 
-  
+Production datasource credentials are supplied by environment variables. No password is committed to source control.
 
-### 6. Access the Webstore
+## Routes
 
-  
+| Method | Route | Access | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/` | Public | Landing/catalog preview |
+| `GET`, `POST` | `/register` | Public | Customer registration |
+| `GET`, `POST` | `/login` | Public | Customer authentication |
+| `GET` | `/products` | Authenticated | Storefront |
+| `GET` | `/cart/items` | Authenticated | Reusable cart fragment |
+| `POST` | `/cart/add`, `/cart/remove`, `/cart/clear` | Authenticated + CSRF | Session cart mutations |
+| `GET`, `POST` | `/checkout` | Authenticated + CSRF | Review and place order |
+| `GET` | `/orders/{orderNumber}` | Authenticated | Persisted receipt |
+| `GET`, `POST` | `/admin/login` | Public form / admin session | Administrator authentication |
+| `GET`, `POST` | `/admin/products/**` | `ROLE_ADMIN` + CSRF for mutations | Catalog and image management |
+| `GET` | `/actuator/health` | Public | Liveness/readiness status |
 
-- Open your browser and go to: [http://localhost:8080](http://localhost:8080)
+## Tests
 
-- MySQL is accessible on port 3306
-
-  
-
-## Admin Panel
-
-  
-
-An administrative interface is available to manage your webstore's products.
-
-  
-
-- 📍 Visit: [http://localhost:8080/admin](http://localhost:8080/admin)
-
-- 🔐 Credentials:
-
--  **Username**: `admin`
-
--  **Password**: `adminpass`
-
-  
-
-From the admin panel, you can:
-
-  
-
-- Add new products to your store
-
-- Edit or update existing product details
-
-- Manage inventory and pricing
-
-  
-
-> ⚠️ For security, change these default credentials before deploying to production.
-
-  
-
-## Environment Variables
-
-  
-
-The application uses the following database environment variables, defined in `docker-compose.yml`:
-
-  
-
-```yaml
-
-SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/amazingwebstore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-
-SPRING_DATASOURCE_USERNAME: root
-
-SPRING_DATASOURCE_PASSWORD: root
-
+```bash
+./gradlew test
 ```
 
-  
+The integration tests defend registration privilege boundaries, duplicate-user handling, session cart isolation, server-authoritative totals, stock mutation, receipt persistence, and duplicate/empty checkout rejection.
 
-## Stopping the Application
+## Security notes
 
-  
-
-To stop all running containers:
-
-  
-
-```sh
-
-docker-compose  -f  docker-compose.yml  down
-
-```
-
-  
-
-## Troubleshooting
-
-  
-
-- Check logs for the application or MySQL containers:
-
-  
-
-```sh
-
-docker  logs  webstore
-
-docker  logs  mysql-db
-
-```
-
-  
-
-- Ensure ports 8080 and 3306 are free before starting containers.
-
-- If database connection issues occur, try restarting:
-
-  
-
-```sh
-
-docker-compose  -f  docker-compose.yml  down && docker-compose  -f  docker-compose.yml  up  --build  -d
-
-```
-
-  
+This is a portfolio/reference application, not a payment processor. Checkout is intentionally simulated and never collects card data. Before internet deployment, add an external secret manager, TLS termination, database backups, rate limiting, and environment-specific monitoring.
 
 ## License
 
-  
-
-This project is licensed under the **MIT License**.
-
-  
-
-## Author
-
-  
-
-Developed by **Thomas Roy**.
+Released under the [MIT License](LICENSE).

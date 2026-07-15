@@ -1,180 +1,209 @@
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOM fully loaded, initializing checkout and cart restoration.");
-    
     const cartButton = document.getElementById("cartButton");
     const cartSidebar = document.getElementById("cartSidebar");
     const closeCart = document.getElementById("closeCart");
+    const getCartItemsContainer = () => document.getElementById("cartItems");
+    const cartStatus = document.getElementById("cartStatus");
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute("content");
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content");
+    let returnFocusTo = null;
+    const pendingProducts = new Set();
 
-    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute("content");
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute("content");
+    function csrfHeaders() {
+        return {
+            "Content-Type": "application/json",
+            [csrfHeader]: csrfToken
+        };
+    }
 
-    cartButton.addEventListener("click", function () {
-        cartSidebar.classList.add("active");
-        loadCart();
-    });
-
-    closeCart.addEventListener("click", function () {
-        cartSidebar.classList.remove("active");
-    });
-
-    window.addEventListener("click", function (e) {
-        if (!cartSidebar.contains(e.target) && !cartButton.contains(e.target) && !e.target.classList.contains("add-to-cart")) {
-            cartSidebar.classList.remove("active");
+    function announce(message, type) {
+        if (!cartStatus) {
+            return;
         }
-    });
+        cartStatus.textContent = message || "";
+        cartStatus.className = type ? `cart-status ${type}` : "cart-status";
+    }
 
-    function saveCartToLocalStorage(cartHtml) {
-        if (cartHtml.trim() !== "") {  
-            localStorage.setItem("cartContents", cartHtml);
-            console.log("Cart saved to localStorage.");
-        } else {
-            console.warn("Cart is empty; not saving to localStorage.");
+    function setDrawer(open) {
+        if (!cartButton || !cartSidebar) {
+            return;
+        }
+        cartSidebar.classList.toggle("active", open);
+        cartSidebar.setAttribute("aria-hidden", String(!open));
+        cartButton.setAttribute("aria-expanded", String(open));
+        document.body.classList.toggle("cart-open", open);
+
+        if (open) {
+            returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : cartButton;
+            loadCart();
+            window.requestAnimationFrame(() => closeCart?.focus());
+        } else if (returnFocusTo && typeof returnFocusTo.focus === "function") {
+            returnFocusTo.focus();
+            returnFocusTo = null;
         }
     }
 
-    function loadCartFromLocalStorage() {
-        const savedCart = localStorage.getItem("cartContents");
-        if (savedCart) {
-            console.log("Loaded cart from localStorage.");
-        } else {
-            console.warn("No saved cart found in localStorage.");
+    function hasCsrfToken() {
+        if (!csrfHeader || !csrfToken) {
+            announce("Security token is missing. Refresh and try again.", "error");
+            return false;
         }
-        return savedCart || "";
+        return true;
     }
 
-    function restoreCart() {
-        console.log("Restoring cart from localStorage...");
-        const savedCart = loadCartFromLocalStorage();
-        if (savedCart) {
-            const cartItemsContainer = document.querySelector(".cart-items");
-            if (cartItemsContainer) {
-                cartItemsContainer.innerHTML = savedCart;
-                console.log("Cart UI updated from localStorage.");
-                attachCartEventListeners();
+    function setButtonPending(button, pending, text) {
+        if (!button) {
+            return;
+        }
+        if (pending) {
+            button.dataset.originalText = button.textContent;
+            button.disabled = true;
+            button.setAttribute("aria-busy", "true");
+            button.textContent = text;
+        } else {
+            button.disabled = button.matches(".add-to-cart") && button.dataset.outOfStock === "true";
+            button.removeAttribute("aria-busy");
+            if (button.dataset.originalText) {
+                button.textContent = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
+        }
+    }
+
+    function handleCartResponse(response) {
+        return response.text().then(html => {
+            if (!response.ok) {
+                throw new Error(html.replace(/<[^>]*>/g, "").trim() || "Cart update failed.");
+            }
+            return html;
+        });
+    }
+
+    function updateCartUI(html, message) {
+        const cartItemsContainer = getCartItemsContainer();
+        if (cartItemsContainer && html) {
+            const template = document.createElement("template");
+            template.innerHTML = html.trim();
+            const renderedFragment = template.content.querySelector("#cartItems");
+            const renderedTotal = (renderedFragment || template.content).querySelector("#cartTotal")?.textContent.replace("Total: ", "");
+            if (renderedFragment) {
+                cartItemsContainer.replaceWith(renderedFragment);
             } else {
-                console.error("Cart items container not found during restore.");
+                cartItemsContainer.innerHTML = html;
+            }
+            const cartTotalContainer = document.getElementById("cartFooterTotal");
+            if (cartTotalContainer && renderedTotal) {
+                cartTotalContainer.textContent = renderedTotal;
             }
         }
-    }
-
-    function addToCart(productId) {
-        console.log(`Adding product with ID ${productId} to the cart`);
-        fetch("/cart/add", {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify({ productId: productId, quantity: 1 })
-        }).then(response => response.text())
-          .then(html => {
-            console.log("Response from server:", html);
-            updateCartUI(html);
-        }).catch(error => {
-            console.error("Error adding to cart:", error);
-        });
-    }
-
-    function removeFromCart(productId) {
-        console.log(`Removing product with ID ${productId} from the cart`);
-        fetch(`/cart/remove/${productId}`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            }
-        }).then(response => response.text())
-          .then(html => {
-            console.log("Response from server:", html);
-            updateCartUI(html);
-        }).catch(error => {
-            console.error("Error removing from cart:", error);
-        });
-    }
-
-    function clearCart() {
-        console.log("Clearing cart...");
-        fetch("/cart/clear", {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                [csrfHeader]: csrfToken
-            }
-        }).then(response => response.text())
-          .then(html => {
-            console.log("Response from server:", html);
-            updateCartUI(html);
-        }).catch(error => {
-            console.error("Error clearing cart:", error);
-        });
+        if (message) {
+            announce(message, "success");
+        }
     }
 
     function loadCart() {
-        console.log("Loading cart...");
-        fetch("/cart/items")
-            .then(response => response.text())
-            .then(html => {
-                console.log("Response from server:", html);
-                if (html.trim() !== "") {
-                    updateCartUI(html);
-                } else {
-                    restoreCart(); 
-                }
-            })
-            .catch(error => console.error("Error loading cart:", error));
-    }
-
-    function updateCartUI(html) {
-        const cartItemsContainer = document.querySelector(".cart-items");
-        const cartTotalContainer = document.querySelector(".cart-footer h3 span");
-
-        if (cartItemsContainer) {
-            if (html.trim() !== "") {  
-                cartItemsContainer.innerHTML = html;
-                forceDOMUpdate(cartItemsContainer);
-                attachCartEventListeners();
-
-                const totalPrice = document.querySelector(".cart-footer h3 span")?.textContent.trim();
-                if (cartTotalContainer) {
-                    cartTotalContainer.textContent = totalPrice || "$0.00";  
-                }
-
-                saveCartToLocalStorage(html);
-            }
-        } else {
-            console.error("Cart items container not found!");
+        if (!getCartItemsContainer()) {
+            return Promise.resolve();
         }
+        announce("Loading cart...", "pending");
+        return fetch("/cart/items", { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(handleCartResponse)
+            .then(html => updateCartUI(html, "Cart updated."))
+            .catch(error => announce(error.message, "error"));
     }
 
-    function attachCartEventListeners() {
-        console.log("Attaching event listeners to remove buttons.");
-        document.querySelectorAll(".remove-item").forEach(button => {
-            button.addEventListener("click", function () {
-                let productId = this.getAttribute("data-id");
-                console.log("Removing product with ID:", productId);
-                removeFromCart(productId);
-            });
+    function mutateCart(url, options, successMessage) {
+        if (!hasCsrfToken()) {
+            return Promise.resolve();
+        }
+        announce("Updating cart...", "pending");
+        return fetch(url, options)
+            .then(handleCartResponse)
+            .then(html => updateCartUI(html, successMessage))
+            .catch(error => announce(error.message, "error"));
+    }
+
+    function addToCart(button) {
+        const productId = button.getAttribute("data-id");
+        if (!productId || pendingProducts.has(productId)) {
+            return;
+        }
+        pendingProducts.add(productId);
+        setButtonPending(button, true, "Adding...");
+        mutateCart("/cart/add", {
+            method: "POST",
+            headers: csrfHeaders(),
+            body: JSON.stringify({ productId: Number(productId), quantity: 1 })
+        }, "Added to cart.").finally(() => {
+            pendingProducts.delete(productId);
+            setButtonPending(button, false);
+            setDrawer(true);
         });
-
-        document.getElementById("clearCart")?.addEventListener("click", function () {
-            console.log("Clearing cart...");
-            clearCart();
-        });
     }
 
-    function forceDOMUpdate(cartItemsContainer) {
-        cartItemsContainer.style.display = 'none';
-        cartItemsContainer.offsetHeight; 
-        cartItemsContainer.style.display = '';
+    function removeFromCart(button) {
+        const productId = button.getAttribute("data-id");
+        if (!productId) {
+            return;
+        }
+        setButtonPending(button, true, "Removing...");
+        mutateCart(`/cart/remove/${encodeURIComponent(productId)}`, {
+            method: "POST",
+            headers: csrfHeaders()
+        }, "Removed from cart.").finally(() => setButtonPending(button, false));
     }
 
-    document.body.addEventListener("click", function (event) {
-        if (event.target && event.target.classList.contains("add-to-cart")) {
-            let productId = event.target.getAttribute("data-id");
-            console.log("Adding product with ID:", productId);
-            addToCart(productId);
+    function clearCart(button) {
+        setButtonPending(button, true, "Clearing...");
+        mutateCart("/cart/clear", {
+            method: "POST",
+            headers: csrfHeaders()
+        }, "Cart cleared.").finally(() => setButtonPending(button, false));
+    }
+
+    cartButton?.addEventListener("click", function () {
+        setDrawer(!cartSidebar?.classList.contains("active"));
+    });
+
+    closeCart?.addEventListener("click", function () {
+        setDrawer(false);
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && cartSidebar?.classList.contains("active")) {
+            setDrawer(false);
         }
     });
 
-    restoreCart();
+    document.addEventListener("click", function (event) {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        const addButton = target.closest(".add-to-cart");
+        if (addButton) {
+            addToCart(addButton);
+            return;
+        }
+        const removeButton = target.closest(".remove-item");
+        if (removeButton) {
+            removeFromCart(removeButton);
+            return;
+        }
+        const clearButton = target.closest("#clearCart");
+        if (clearButton) {
+            clearCart(clearButton);
+            return;
+        }
+        if (cartSidebar?.classList.contains("active") && cartButton && !cartSidebar.contains(target) && !cartButton.contains(target)) {
+            setDrawer(false);
+        }
+    });
+
+    if (cartSidebar) {
+        cartSidebar.setAttribute("aria-hidden", "true");
+    }
+    if (cartButton) {
+        cartButton.setAttribute("aria-expanded", "false");
+    }
 });

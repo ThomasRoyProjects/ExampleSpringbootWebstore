@@ -38,13 +38,6 @@ out/
 
 ### OS / Editor Junk ###
 .DS_Store
-<<<<<<< HEAD
-src/.DS_Store
-src/main/.DS_Store
-src/main/resources/.DS_Store
-.DS_Store
-.DS_Store
-=======
 Thumbs.db
 Desktop.ini
 
@@ -52,18 +45,17 @@ Desktop.ini
 *.log
 *.tmp
 *.swp
+/data/
+/uploads/
 
 ### Local Environment / Secrets ###
 .env
 .env.*
+!.env.example
 application-local.properties
-application-dev.properties
 src/main/resources/application-local.properties
-src/main/resources/application-dev.properties
 
 ### Local Databases ###
 *.db
 *.sqlite
 *.sqlite3
->>>>>>> bd6444a68f11d9a3db5c157692385fabb6dfccc0
-.DS_Store
