@@ -8,6 +8,7 @@ import com.store.webstore.service.OrderService;
 import com.store.webstore.exception.ProductNotFoundException;
 import jakarta.validation.Valid;
 import java.util.Map;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -47,11 +48,17 @@ public class CheckoutController {
 
     @PostMapping("/process")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> processCheckout(@Valid @RequestBody CheckoutRequest request, BindingResult bindingResult) {
+    public ResponseEntity<Map<String, Object>> processCheckout(
+            @Valid @RequestBody CheckoutRequest request,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Map.of("error", bindingResult.getFieldError().getDefaultMessage()));
         }
-        Order order = orderService.confirmOrder(request.getContinent());
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+        Order order = orderService.confirmOrder(request.getContinent(), authentication.getName());
         return ResponseEntity.ok(Map.of("orderNumber", order.getOrderNumber(), "receiptUrl", "/orders/" + order.getOrderNumber()));
     }
 

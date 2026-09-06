@@ -16,6 +16,7 @@
         <p><strong>Status:</strong> <span th:text="${order.status}">CONFIRMED</span></p>
         <p><strong>Created:</strong> <span th:text="${order.createdAt}">created</span></p>
         <p><strong>Shipping Region:</strong> <span th:text="${order.continent}">Europe</span></p>
+        <p th:if="${order.user != null}"><strong>Customer:</strong> <span th:text="${order.user.email}">customer@example.com</span></p>
 
         <div class="table-wrap">
             <table>

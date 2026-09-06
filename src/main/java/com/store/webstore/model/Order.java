@@ -1,11 +1,14 @@
 package com.store.webstore.model;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -20,6 +23,10 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false, unique = true, updatable = false, length = 32)
     private String orderNumber;
@@ -82,4 +89,6 @@ public class Order {
     public BigDecimal getFinalPrice() { return finalPrice; }
     public void setFinalPrice(BigDecimal finalPrice) { this.finalPrice = finalPrice; }
     public List<OrderLine> getItems() { return items; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

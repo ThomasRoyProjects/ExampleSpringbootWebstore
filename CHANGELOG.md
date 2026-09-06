@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-09-06
+
+### Added
+
+- Forward Flyway schema migration `V2__add_customer_ownership_to_orders.sql` adding nullable `user_id` foreign key referencing `users(id)` and supporting index.
+- Explicit customer ownership on newly created orders linked to authenticated user principals.
+- Principal ownership enforcement on receipt lookups returning non-leaking 404 responses for cross-user or legacy unowned order lookups.
+- Session-level lock and critical section around checkout spanning the full transaction commit boundary and coordinating with cart mutations to prevent duplicate ordering.
+- Deterministic ascending product-id row locking order for multi-item checkouts to prevent lock-order deadlocks.
+- Focused integration tests for receipt access control, concurrent same-session submission serialization, reversed multi-product row lock ordering, and cart preservation on rollback.
+
+### Fixed
+
+- Unauthenticated order creation and unauthenticated receipt access across user boundaries.
+- Race condition allowing concurrent submissions in the same session to create duplicate orders before post-commit cart clear.
+- Deadlock vulnerability during concurrent multi-item checkouts with reversed cart item sequences.
+- Inadvertent cart clearance on checkout failure.
+
 ## 2026-07-14
 
 ### Changed
