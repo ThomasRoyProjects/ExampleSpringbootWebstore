@@ -81,13 +81,13 @@ public class OrderService {
                 if (cartItem.getQuantity() <= 0) {
                     throw new IllegalArgumentException("Quantity must be positive");
                 }
-                Consumer<Long> hook = preLockHook;
-                if (hook != null) {
-                    hook.accept(cartItem.getProductId());
-                }
                 Product product = entityManager.find(Product.class, cartItem.getProductId());
                 if (product == null) {
                     throw new ProductNotFoundException(cartItem.getProductId());
+                }
+                Consumer<Long> hook = preLockHook;
+                if (hook != null) {
+                    hook.accept(cartItem.getProductId());
                 }
                 entityManager.refresh(product, LockModeType.PESSIMISTIC_WRITE);
                 if (product.getStockQuantity() < cartItem.getQuantity()) {

@@ -27,7 +27,7 @@ The project demonstrates session-isolated carts, server-authoritative checkout, 
 - Checkout calculates subtotal, tax, shipping, and final price from current database values inside an explicit transaction.
 - Orders persist authenticated customer ownership; receipts enforce principal ownership with non-leaking 404 responses for cross-user or unowned lookups.
 - Same-session checkouts serialize through the transaction commit boundary and coordinate with cart mutations to prevent duplicate ordering.
-- Multi-item checkouts acquire pessimistic product row locks in deterministic product-id order to prevent reversed-cart lock-order deadlocks.
+- Multi-item checkouts acquire pessimistic product row locks in deterministic product-id order, refresh each locked row before validating stock, and prevent reversed-cart lock-order deadlocks.
 - Orders and immutable order lines are persisted and reloadable by confirmation number for their owner or administrators.
 - Product administration uses validated DTOs and a single `/admin/products/**` route family.
 - Image uploads accept only decoded JPEG/PNG content, enforce size/dimension limits, generate server filenames, and prevent path traversal.
@@ -141,7 +141,7 @@ Production datasource credentials are supplied by environment variables. No pass
 ./gradlew test
 ```
 
-The integration tests defend registration privilege boundaries, duplicate-user handling, session cart isolation, server-authoritative totals, stock mutation, receipt persistence and ownership boundaries, cross-user receipt denial, concurrent same-session serialization, deterministic multi-item locking order, and failed-checkout cart preservation.
+The integration tests defend registration privilege boundaries, duplicate-user handling, session cart isolation, server-authoritative totals, stock mutation, receipt persistence and ownership boundaries, cross-user receipt denial, concurrent same-session serialization, deterministic multi-item locking order, final-unit stock contention, and failed-checkout cart preservation.
 
 ## Security notes
 

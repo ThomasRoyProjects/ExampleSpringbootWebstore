@@ -9,13 +9,14 @@
 - Principal ownership enforcement on receipt lookups returning non-leaking 404 responses for cross-user or legacy unowned order lookups.
 - Session-level lock and critical section around checkout spanning the full transaction commit boundary and coordinating with cart mutations to prevent duplicate ordering.
 - Deterministic ascending product-id row locking order for multi-item checkouts to prevent lock-order deadlocks.
-- Focused integration tests for receipt access control, concurrent same-session submission serialization, reversed multi-product row lock ordering, and cart preservation on rollback.
+- Focused integration tests for receipt access control, concurrent same-session submission serialization, reversed multi-product row lock ordering, final-unit stock contention, and cart preservation on rollback.
 
 ### Fixed
 
 - Unauthenticated order creation and unauthenticated receipt access across user boundaries.
 - Race condition allowing concurrent submissions in the same session to create duplicate orders before post-commit cart clear.
 - Deadlock vulnerability during concurrent multi-item checkouts with reversed cart item sequences.
+- Stale inventory reads during cross-session contention by refreshing each product under its pessimistic row lock before validating stock.
 - Inadvertent cart clearance on checkout failure.
 
 ## 2026-07-14
